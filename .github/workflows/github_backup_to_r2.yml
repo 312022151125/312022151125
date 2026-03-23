@@ -1,0 +1,58 @@
+name: 📦 github_backup_to_r2
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔧 install_tools
+        run: |
+          curl -sL https://github.com/cooperspencer/gickup/releases/download/v0.10.39/gickup_0.10.39_linux_amd64.tar.gz | tar xz
+          sudo mv gickup /usr/local/bin/
+
+          curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o aws.zip
+          unzip -q aws.zip
+          sudo ./aws/install
+
+      - name: 📥 backup_repos
+        run: |
+          mkdir -p repos archives
+
+          cat > config.yml << EOF
+          source:
+            github:
+              - token: ${{ secrets.GH_PAT }}
+          destination:
+            local:
+              - path: repos
+                structured: true
+                bare: true
+          EOF
+
+          gickup config.yml
+
+      - name: 🗜️ zip_repos
+        run: |
+          find repos -type d -name "*.git" | while read -r repo; do
+            rel="${repo#repos/}"
+            zip_name="$(echo "$rel" | sed 's#/#__#g').zip"
+            zip -rq -P "${{ secrets.BACKUP_PASSWORD }}" "archives/$zip_name" "$repo"
+          done
+
+      - name: ☁️ upload_to_r2
+        run: |
+          aws configure set aws_access_key_id "${{ secrets.R2_ACCESS_KEY }}"
+          aws configure set aws_secret_access_key "${{ secrets.R2_SECRET_KEY }}"
+
+          aws s3 sync archives/ s3://${{ secrets.R2_BUCKET }}/backup/ \
+            --endpoint-url https://${{ secrets.R2_ENDPOINT }} \
+            --delete \
+            --no-progress
+
+      - name: ✅ done
+        run: echo "backup completed"
