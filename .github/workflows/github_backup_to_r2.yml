@@ -15,10 +15,6 @@ jobs:
           curl -sL https://github.com/cooperspencer/gickup/releases/download/v0.10.39/gickup_0.10.39_linux_amd64.tar.gz | tar xz
           sudo mv gickup /usr/local/bin/
 
-          curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o aws.zip
-          unzip -q aws.zip
-          sudo ./aws/install
-
       - name: 📥 backup_repos
         run: |
           mkdir -p repos archives
