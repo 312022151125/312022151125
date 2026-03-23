@@ -45,7 +45,7 @@ jobs:
           aws configure set aws_access_key_id "${{ secrets.R2_ACCESS_KEY }}"
           aws configure set aws_secret_access_key "${{ secrets.R2_SECRET_KEY }}"
 
-          aws s3 sync archives/ s3://${{ secrets.R2_BUCKET }}/backup/ \
+          aws s3 sync archives/ s3://${{ secrets.R2_BUCKET }}/ \
             --endpoint-url https://${{ secrets.R2_ENDPOINT }} \
             --delete \
             --no-progress
