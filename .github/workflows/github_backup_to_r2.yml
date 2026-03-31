@@ -2,7 +2,7 @@ name: 📦 github_backup_to_r2
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 jobs:
